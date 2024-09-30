@@ -2,9 +2,7 @@
 	<head>
 		<meta charset="UTF-8"/>
 		<style>
-			body {
-				font-family: Inter, sans-serif;
-			}
+			body { font-family: "Segoe UI", sans-serif; }
 		</style>
 	</head>
 <body>
@@ -56,14 +54,14 @@
 </table>
 
 <table width='100%' border='0' cellpadding='3'>
-	{% set tipologia = 'null' %}
+	{% set ns = namespace(tipologia = 'null') %}
 	{% set i = 1 %}
 	{% for riga_ordine in ordine.righe_copia_bar %}
-		{% if tipologia != riga_ordine.desc_tipologia %}
+		{% if ns.tipologia != riga_ordine.desc_tipologia %}
 			<tr bgcolor="#CCCCCC">
 				<td colspan='3'><b>{{riga_ordine.desc_tipologia}}</b></td>
 			</tr>
-			{% set tipologia = riga_ordine.desc_tipologia %}
+			{% set ns.tipologia = riga_ordine.desc_tipologia %}
 			{% set i = i + 1 %}
 		{% endif %}
 		<tr>

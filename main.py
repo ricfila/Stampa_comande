@@ -143,8 +143,9 @@ class App:
 		config.save()
 
 	def log_message(self, message):
+		now = datetime.now()
 		self.log_box.config(state='normal')  # Rendi modificabile
-		self.log_box.insert(tk.END, message + "\n")
+		self.log_box.insert(tk.END, now.strftime("%H:%M:%S") + " | " + message + "\n")
 		self.log_box.config(state='disabled')  # Torna a sola lettura
 		self.log_box.see(tk.END)  # Scrolla automaticamente verso il basso
 
@@ -173,13 +174,8 @@ class App:
 				and ordini.stato_bar <> 'evaso' and ordini.stato_cucina <> 'evaso'\
 				ORDER BY ordini.esportazione desc, passaggi_stato.ora;")
 			ordini = config.get_dict(cur)
-			
-			out = ''
-			for ordine in ordini:
-				out += ('' if len(out) == 0 else ', ') + str(ordine['progressivo'])
-			self.log_message("Ricevuti " + str(len(ordini)) + " ordini: " + out)
 
-			threading.Thread(target=render.processa_ordini, args=(ordini,)).start()
+			threading.Thread(target=render.processa_ordini, args=(ordini,self)).start()
 
 			i = 0
 			while i < 20 and not self.stop_event.is_set():
