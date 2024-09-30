@@ -1,0 +1,110 @@
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/> 
+<html>
+<body>
+
+<img src="C:\sagra\stampe\logo_chiesa.png" />&nbsp;<b>Parrocchia di Stra - Festa della comunità {{ordine.data.strftime("%Y")}}</b><br>
+<table width='100%' border='0' cellspacing='0'>
+	<tr>
+		<td width="15%" rowspan="2" align="center" valign="top">
+			<font size='2'>Ordine</font><br /><font size='5'>{{ordine.progressivo}}</font>
+		</td>
+		<td width="25%">
+			{{ordine.cassa}}
+		</td>
+		<td>
+			{{ordine.data.strftime("%a %d %B")}} - {{ordine.ora.strftime("%H:%M:%S")}}
+		</td>
+		{{if ordine.coperti}}
+			<td width="15%" rowspan="2" align="center" valign="top">
+				<font size='2'>Tavolo</font><br /><font size='5'>{{ordine.numeroTavolo}}</font>
+			</td>
+		{{endif}}
+	</tr>
+	<tr>
+		<td>
+			{{if ordine.per_esportazione()}}
+				ASPORTO
+			{{else}}
+				{{if ordine.coperti}}
+					COPERTI: {{ordine.coperti}}
+				{{else}}
+					AGGIUNTA
+				{{endif}}
+			{{endif}}
+		</td>
+		<td>
+			Cliente: {{ordine.cliente}}
+		</td>
+	</tr>
+	<tr>
+		<td align="center">
+			(ID: {{ordine.id}})
+		</td>
+		<td colspan="2">
+			{{if not ordine.per_esportazione()}}
+				Cameriere:
+			{{endif}}
+		</td>
+	</tr>
+</table>
+
+<table width='100%' border='0' cellpadding='3'>
+	{{setattr(ordine, 'tipologia', 'null')}}
+	{{setattr(ordine, 'i', 1)}}
+	{{for riga_ordine in ordine.righe_copia_cucina()}}
+		{{if ordine.tipologia <> riga_ordine.desc_tipologia}}
+			<tr bgcolor="#CCCCCC">
+				<td colspan='3'><b>{{riga_ordine.desc_tipologia}}</b></td>
+			</tr>
+			{{setattr(ordine, 'tipologia', riga_ordine.desc_tipologia)}}
+			{{setattr(ordine, 'i', getattr(ordine, 'i') + 1)}}
+		{{endif}}
+		<tr>
+			<td align='center'>{{riga_ordine.quantita}}</td>
+			<td>{{riga_ordine.descrizione}}{{if riga_ordine.note}}&nbsp;→&nbsp;<i>{{riga_ordine.note}}</i>{{endif}}</td>
+			<td align='right'>&euro;&nbsp;{{riga_ordine.calcola_prezzo_totale()}}</td>
+		</tr>
+		{{setattr(ordine, 'i', getattr(ordine, 'i') + 1)}}
+	{{endfor}}
+	{{setattr(ordine, 'totbar', 0)}}
+	{{for riga_bar in ordine.righe_copia_bar()}}
+		{{setattr(ordine, 'totbar', getattr(ordine, 'totbar') + riga_bar.calcola_prezzo_totale())}}
+	{{endfor}}
+	<tr bgcolor="#CCCCCC">
+		<td colspan='3'></td>
+	</tr>
+	{{if getattr(ordine, 'totbar') > 0}}
+		<tr>
+			<td></td>
+			<td>TOTALE BAR</td>
+			<td align='right'>&euro;&nbsp;{{getattr(ordine, 'totbar')}}</td>
+		</tr>
+		{{setattr(ordine, 'i', getattr(ordine, 'i') + 1)}}
+	{{endif}}
+	<tr>
+		<td></td>
+		<td>TOTALE</td>
+		<td align='right'>&euro;&nbsp;{{ordine.totale()}}</td>
+	</tr>
+</table>
+
+<br /><br />
+<table width="100%">
+	<tr>
+		<td valign='top'>
+			{{if ordine.note}}
+				<b>Note:</b> <i>{{ordine.note}}</i><br>
+			{{endif}}
+		</td>
+		<td width='30%'>
+			<table border='0' cellpadding='3'>
+				{{for x in range(getattr(ordine, 'i'), 20)}}
+					<tr><td>&nbsp;</td></tr>
+				{{endfor}}
+			</table>
+			<img src="C:\sagra\stampe\spirale.png" />
+		</td>
+	</tr>
+</table>
+</body>
+</html>
