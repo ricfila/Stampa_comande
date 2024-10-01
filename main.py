@@ -3,9 +3,7 @@ import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 import threading
 import win32print
-import psycopg2
-from datetime import datetime, timedelta
-import time
+from datetime import datetime
 
 import config
 from config import configs
@@ -20,36 +18,46 @@ class App:
 		self.stop_event = threading.Event()
 		self.info_turno = None
 
-		self.root.minsize(900, 500)
+		self.root.minsize(1000, 500)
 		self.root.resizable(True, True)
-		self.root.grid_columnconfigure(0, minsize=400, weight=1)
-		self.root.grid_columnconfigure(1, minsize=400, weight=1)
-		self.root.grid_rowconfigure(1, weight=1)
+		self.root.grid_columnconfigure(0, minsize=400, weight=0)
+		self.root.grid_columnconfigure(1, minsize=500, weight=1)
+		self.root.grid_rowconfigure(3, weight=1)
 
 		self.create_widget()
 	
 	def create_widget(self):
+		self.lturno = ttk.Label(self.root, text="Avviare il processo per identificare il turno di lavoro")
+		self.lturno.grid(row=0, column=0, columnspan=2, padx=10, pady=10, sticky="nw")
+
+		self.separator = ttk.Separator(self.root, orient='horizontal')
+		self.separator.grid(row=1, column=0, columnspan=2, padx=5, pady=[0, 10], sticky="ew")
+
 		self.frame0 = ttk.Frame(self.root)
-		self.frame0.grid(row=0, column=0, padx=0, pady=10, sticky="wn")
+		self.frame0.grid(row=2, column=0, padx=0, pady=[0, 10], sticky="nw")
 		self.frame0.grid_columnconfigure(0, minsize=150, weight=0)
 		self.frame0.grid_columnconfigure(1, minsize=250, weight=0)
 
 		self.frame1 = ttk.Frame(self.root)
-		self.frame1.grid(row=0, column=1, padx=0, pady=10, sticky="wn")
-		self.frame1.grid_columnconfigure(0, minsize=200, weight=0)
-		self.frame1.grid_columnconfigure(1, minsize=200, weight=0)
+		self.frame1.grid(row=2, column=1, padx=0, pady=[0, 10], sticky="nw")
+		self.frame1.grid_columnconfigure(0, minsize=250, weight=0)
+		self.frame1.grid_columnconfigure(1, minsize=250, weight=0)
+
+		self.framelog = ttk.Frame(self.root)
+		self.framelog.grid(row=3, column=0, columnspan=2, padx=0, pady=[0, 10], sticky="nsew")
+		self.framelog.grid_columnconfigure(0, minsize=200, weight=1)
+		self.framelog.grid_columnconfigure(2, minsize=50, weight=0)
+		self.framelog.grid_columnconfigure(4, minsize=50, weight=0)
+		self.framelog.grid_rowconfigure(1, weight=1)
 
 		self.widget_frame0()
 		self.widget_frame1()
-
-		# Riquadro di sola lettura per log
-		self.log_box = tk.Text(self.root, state='disabled', height=10, width=40)
-		self.log_box.grid(row=1, column=0, columnspan=2, padx=10, pady=[0, 10], sticky="nsew")
+		self.widget_framelog()
 
 	def widget_frame0(self):
 		# Label titolo 1
 		self.ltitolo1 = ttk.Label(self.frame0, text="Processo di stampa automatica", font=("Helvetica", 12, "bold"))
-		self.ltitolo1.grid(row=0, column=0, columnspan=2, padx=10, pady=[0, 10], sticky="w")
+		self.ltitolo1.grid(row=0, column=0, columnspan=2, padx=10, pady=[0, 10], sticky="wn")
 
 		# Input IP del server
 		self.lserver = ttk.Label(self.frame0, text="Server di connessione:")
@@ -96,20 +104,52 @@ class App:
 		self.lstampante = ttk.Label(self.frame1, text="ID dell'ordine:")
 		self.lstampante.grid(row=1, column=0, padx=10, pady=[0, 10], sticky="w")
 
-		self.numeric_var = ttk.Entry() #StringVal
-		self.numeric_entry = ttk.Entry(self.frame1, textvariable=self.numeric_var, validate="key")
-		self.numeric_entry['validatecommand'] = (self.numeric_entry.register(self.validate_numeric), '%P')
-		self.numeric_entry.grid(row=1, column=1, padx=10, pady=[0, 10], sticky="ew")
+		self.input_id = ttk.Entry() #StringVal
+		self.input_id = ttk.Entry(self.frame1, textvariable=self.input_id, validate="key")
+		self.input_id['validatecommand'] = (self.input_id.register(self.validate_numeric), '%P')
+		self.input_id.grid(row=1, column=1, padx=10, pady=[0, 10], sticky="ew")
+
+		self.stato_singolo = ttk.Label(self.frame1, text="")
 
 		# Operazioni sull'ordine
-		self.button1 = ttk.Button(self.frame1, text="Scarica ordine aggiornato", command=self.action1, bootstyle="primary")
-		self.button1.grid(row=2, column=0, columnspan=2, padx=10, pady=[0, 10], sticky="w")
+		self.btnscarica = ttk.Button(self.frame1, text="Scarica ordine aggiornato", command=lambda:render.scarica(self), bootstyle="primary")
+		self.btnscarica.grid(row=2, column=0, padx=10, pady=[0, 10], sticky="ew")
+		self.btncliente = ttk.Button(self.frame1, text="Stampa ricevuta cliente", command=lambda:render.stampa_singola(self, 'cliente'), bootstyle="secondary")
+		self.btncliente.grid(row=2, column=1, padx=10, pady=[0, 10], sticky="ew")
+		self.btnbar = ttk.Button(self.frame1, text="Stampa comanda bar", command=lambda:render.stampa_singola(self, 'bar'), bootstyle="info")
+		self.btnbar.grid(row=3, column=1, padx=10, pady=[0, 10], sticky="ew")
+		self.btncucina = ttk.Button(self.frame1, text="Stampa comanda cucina", command=lambda:render.stampa_singola(self, 'cucina'), bootstyle="warning")
+		self.btncucina.grid(row=4, column=1, padx=10, pady=[0, 10], sticky="ew")
 
-		self.button2 = ttk.Button(self.frame1, text="Stampa comanda bar", command=self.action2, bootstyle="info")
-		self.button2.grid(row=3, column=0, padx=10, pady=0, sticky="ew")
-		self.button2 = ttk.Button(self.frame1, text="Stampa comanda cucina", command=self.action2, bootstyle="warning")
-		self.button2.grid(row=3, column=1, padx=10, pady=0, sticky="ew")
+		self.stato_singolo.grid(row=5, column=0, columnspan=2, padx=10, pady=0, sticky="nw")
 
+	def widget_framelog(self):
+		ltitolo1 = ttk.Label(self.framelog, text="Log generali", font=("Helvetica", 12, "bold"))
+		ltitolo1.grid(row=0, column=0, columnspan=2, padx=10, pady=[0, 10], sticky="wn")
+
+		self.log_box = tk.Text(self.framelog, state='disabled', height=10, width=40)
+		self.log_box.grid(row=1, column=0, padx=[10, 0], pady=0, sticky="nsew")
+		scrollb = ttk.Scrollbar(self.framelog, command=self.log_box.yview)
+		scrollb.grid(row=1, column=1, sticky='nsew')
+		self.log_box['yscrollcommand'] = scrollb.set
+
+		ltitolo2 = ttk.Label(self.framelog, text="Stampe eseguite", font=("Helvetica", 12, "bold"), bootstyle="success")
+		ltitolo2.grid(row=0, column=2, columnspan=2, padx=10, pady=[0, 10], sticky="wn")
+
+		self.log_box_stampe = tk.Text(self.framelog, state='disabled', height=10, width=40)
+		self.log_box_stampe.grid(row=1, column=2, padx=[10, 0], pady=0, sticky="nsew")
+		scrollbs = ttk.Scrollbar(self.framelog, command=self.log_box_stampe.yview)
+		scrollbs.grid(row=1, column=3, sticky='nsew')
+		self.log_box_stampe['yscrollcommand'] = scrollbs.set
+
+		ltitolo3 = ttk.Label(self.framelog, text="Stampe fallite", font=("Helvetica", 12, "bold"), bootstyle="danger")
+		ltitolo3.grid(row=0, column=4, columnspan=2, padx=10, pady=[0, 10], sticky="wn")
+
+		self.log_box_fallite = tk.Text(self.framelog, state='disabled', height=10, width=40)
+		self.log_box_fallite.grid(row=1, column=4, padx=[10, 0], pady=0, sticky="nsew")
+		scrollbf = ttk.Scrollbar(self.framelog, command=self.log_box_fallite.yview)
+		scrollbf.grid(row=1, column=5, sticky='nsew', padx=[0, 10])
+		self.log_box_fallite['yscrollcommand'] = scrollbf.set
 
 	def validate_numeric(self, value_if_allowed):
 		return (value_if_allowed == "" or value_if_allowed.isdigit())
@@ -123,21 +163,16 @@ class App:
 			# Avvia thread
 			self.update_configs()
 			self.stop_event.clear()
-			self.thread = threading.Thread(target=self.query_process, daemon=True)
+			self.thread = threading.Thread(target=render.query_process, args=(self,), daemon=True)
 			self.thread.start()
 			self.lstato.config(text="Il processo è in esecuzione")
 			self.btnstart_stop.config(text="Arresta processo", bootstyle="danger")
 		else:
 			# Arresta thread
 			self.stop_event.set()
-			self.connection.close()
 			self.lstato.config(text="Il processo è sospeso")
 			self.btnstart_stop.config(text="Avvia processo", bootstyle="success")
-			
-	def action1(self):
-		pass
-	def action2(self):
-		pass
+	
 	def save(self):
 		self.update_configs()
 		config.save()
@@ -145,42 +180,31 @@ class App:
 	def log_message(self, message):
 		now = datetime.now()
 		self.log_box.config(state='normal')  # Rendi modificabile
-		self.log_box.insert(tk.END, now.strftime("%H:%M:%S") + " | " + message + "\n")
+		out_text = now.strftime("%H:%M:%S") + " | " + message + "\n"
+		self.log_box.insert(tk.END, out_text)
 		self.log_box.config(state='disabled')  # Torna a sola lettura
 		self.log_box.see(tk.END)  # Scrolla automaticamente verso il basso
+		try:
+			with open("general.log", "a", encoding="utf-8") as logfile:
+				logfile.write(out_text)
+		except Exception as e:
+			print(f"Errore di scrittura log generale: {e}")
+	
+	def log_stampe(self, message, riuscita):
+		if riuscita:
+			target = self.log_box_stampe
+		else:
+			target = self.log_box_fallite
+		target.config(state='normal')  # Rendi modificabile
+		target.insert(tk.END, message + "\n")
+		target.config(state='disabled')  # Torna a sola lettura
+		target.see(tk.END)  # Scrolla automaticamente verso il basso
+		try:
+			with open("stampe_" + ("eseguite" if riuscita else "fallite") + ".log", "a", encoding="utf-8") as logfile:
+				logfile.write(message + "\n")
+		except Exception as e:
+			print("Errore di scrittura log stampe " + ("eseguite" if riuscita else "fallite") + f": {e}")
 
-	def start_connection(self):
-		self.connection = config.get_connection()
-
-	def query_process(self):
-		self.start_connection()
-		cur = self.connection.cursor()
-
-		# Aggiornamento turno di servizio
-		cur.execute("SELECT * FROM shiftstart;")
-		data1 = cur.fetchone()[0]
-		data2 = data1 + timedelta(days=1)
-		self.info_turno = "ordini.data >= '" + str(data1.date()) + "' and ordini.data < '" + str(data2.date()) + "' and ordini.ora > '" + str(data1.time()) + "'" + (" and ordini.ora < '17:00'" if data1.hour == 0 else "")
-
-		while not self.stop_event.is_set():
-			self.connection.reset()
-			cur.execute("SELECT ordini.* FROM ordini LEFT JOIN passaggi_stato ON passaggi_stato.id_ordine = ordini.id \
-				WHERE " + self.info_turno + " and(\
-					(ordini.esportazione = 't' and passaggi_stato.stato is null) or \
-					(passaggi_stato.stato is null and ordini.\"numeroTavolo\" <> '') or \
-					(passaggi_stato.stato = 0 and (EXTRACT(HOUR FROM (LOCALTIME - passaggi_stato.ora)) * 3600 + \
-									EXTRACT(MINUTE FROM (LOCALTIME - passaggi_stato.ora)) * 60 + \
-									EXTRACT(SECOND FROM (LOCALTIME - passaggi_stato.ora))) > 30)) \
-				and ordini.stato_bar <> 'evaso' and ordini.stato_cucina <> 'evaso'\
-				ORDER BY ordini.esportazione desc, passaggi_stato.ora;")
-			ordini = config.get_dict(cur)
-
-			threading.Thread(target=render.processa_ordini, args=(ordini,self)).start()
-
-			i = 0
-			while i < 20 and not self.stop_event.is_set():
-				time.sleep(2)
-				i += 2
 
 if __name__ == "__main__":
 	config.init()
