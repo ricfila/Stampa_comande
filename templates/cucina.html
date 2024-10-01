@@ -7,7 +7,7 @@
 	</head>
 <body>
 
-<img src="C:\sagra\stampe\logo_chiesa.png" />&nbsp;<b>Parrocchia di Stra - Festa della comunità {{ordine.data.strftime("%Y")}}</b><br>
+<img src="logo_chiesa.png" />&nbsp;<b>Parrocchia di Stra - Festa della comunità {{ordine.data.strftime("%Y")}}</b><br>
 <table width='100%' border='0' cellspacing='0'>
 	<tr>
 		<td width="15%" rowspan="2" align="center" valign="top">
@@ -54,7 +54,7 @@
 </table>
 
 <table width='100%' border='0' cellpadding='3'>
-	{% set ns = namespace(tipologia = 'null', i = 1) %}
+	{% set ns = namespace(tipologia = 'null', i = 1, totbar = 0) %}
 	{% for riga_ordine in ordine.righe_copia_cucina %}
 		{% if ns.tipologia != riga_ordine.desc_tipologia %}
 			<tr bgcolor="#CCCCCC">
@@ -70,18 +70,17 @@
 		</tr>
 		{% set ns.i = ns.i + 1 %}
 	{% endfor %}
-	{% set totbar = 0 %}
 	{% for riga_bar in ordine.righe_copia_bar %}
-		{% set totbar = totbar + riga_bar.prezzo_totale %}
+		{% set ns.totbar = ns.totbar + riga_bar.prezzo_totale %}
 	{% endfor %}
 	<tr bgcolor="#CCCCCC">
 		<td colspan='3'></td>
 	</tr>
-	{% if totbar > 0 %}
+	{% if ns.totbar > 0 %}
 		<tr>
 			<td></td>
 			<td>TOTALE BAR</td>
-			<td align='right'>&euro;&nbsp;{{totbar}}</td>
+			<td align='right'>&euro;&nbsp;{{ns.totbar}}</td>
 		</tr>
 		{% set ns.i = ns.i + 1 %}
 	{% endif %}
@@ -106,7 +105,7 @@
 					<tr><td>&nbsp;</td></tr>
 				{% endfor %}
 			</table>
-			<img src="C:\sagra\stampe\spirale.png" />
+			<img src="spirale.png" />
 		</td>
 	</tr>
 </table>

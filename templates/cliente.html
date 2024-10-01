@@ -10,7 +10,7 @@
 <img src="logo_chiesa.png" />&nbsp;<b>Parrocchia di Stra - Festa della comunità {{ordine.data.strftime("%Y")}}</b><br>
 <table width='100%' border='0' cellspacing='0'>
 	<tr>
-		<td width="15%" rowspan="2" align="center" valign="top">
+		<td width="15%" rowspan="2" align="center" avalign="top">
 			<font size='2'>Ordine</font><br /><font size='5'>{{ordine.progressivo}}</font>
 		</td>
 		<td width="25%">
@@ -19,11 +19,6 @@
 		<td>
 			{{ordine.data.strftime("%a %d %B")}} - {{ordine.ora.strftime("%H:%M:%S")}}
 		</td>
-		{% if ordine.coperti %}
-			<td width="15%" rowspan="2" align="center" valign="top">
-				<font size='2'>Tavolo</font><br /><font size='5'>{{ordine.numeroTavolo}}</font>
-			</td>
-		{% endif %}
 	</tr>
 	<tr>
 		<td>
@@ -31,7 +26,7 @@
 				ASPORTO
 			{% else %}
 				{% if ordine.coperti %}
-					COPERTI: {{ ordine.coperti }}
+					COPERTI: {{ordine.coperti}}
 				{% else %}
 					AGGIUNTA
 				{% endif %}
@@ -53,61 +48,45 @@
 	</tr>
 </table>
 
-<table width='100%' border='0' cellpadding='3'>
-	{% set ns = namespace(tipologia = 'null', i = 1, totcucina = 0) %}
-	{% for riga_ordine in ordine.righe_copia_bar %}
+<table width='100%' border='0' cellpadding='2'>
+	{% set ns = namespace(tipologia = 'null') %}
+	{% for riga_ordine in ordine.righe_copia_cliente %}
 		{% if ns.tipologia != riga_ordine.desc_tipologia %}
 			<tr bgcolor="#CCCCCC">
-				<td colspan='3'><b>{{riga_ordine.desc_tipologia}}</b></td>
+				<td colspan='3'></td>
 			</tr>
 			{% set ns.tipologia = riga_ordine.desc_tipologia %}
-			{% set ns.i = ns.i + 1 %}
 		{% endif %}
 		<tr>
 			<td align='center'>{{riga_ordine.quantita}}</td>
 			<td>{{riga_ordine.descrizione}}{% if riga_ordine.note %}&nbsp;→&nbsp;<i>{{riga_ordine.note}}</i>{% endif %}</td>
 			<td align='right'>&euro;&nbsp;{{riga_ordine.prezzo_totale}}</td>
 		</tr>
-		{% set ns.i = ns.i + 1 %}
-	{% endfor %}
-	{% for riga_cucina in ordine.righe_copia_cucina %}
-		{% set ns.totcucina = ns.totcucina + riga_cucina.prezzo_totale %}
 	{% endfor %}
 	<tr bgcolor="#CCCCCC">
 		<td colspan='3'></td>
 	</tr>
-	{% if ns.totcucina > 0 %}
-		<tr>
-			<td></td>
-			<td>TOTALE CUCINA</td>
-			<td align='right'>&euro;&nbsp;{{ns.totcucina}}</td>
-		</tr>
-		{% set ns.i = ns.i + 1 %}
-	{% endif %}
 	<tr>
 		<td></td>
 		<td>TOTALE</td>
-		<td align='right'>&euro;&nbsp;{{ ordine.totale }}</td>
+		<td align='right'>&euro;&nbsp;{{ordine.totale}}</td>
 	</tr>
 </table>
 
 <br /><br />
-<table width="100%">
-	<tr>
-		<td valign='top'>
+<table width="100%" cellpadding='0' cellspacing='0'>
+	<tr valign='bottom'>
+		<td valign='bottom'>
 			{% if ordine.note %}
 				<b>Note:</b> <i>{{ordine.note}}</i><br>
 			{% endif %}
+			<small>www.parrocchiadistra.it</small>
 		</td>
-		<td width='30%'>
-			<table border='0' cellpadding='3'>
-				{% for x in range(ns.i, 20) %}
-					<tr><td>&nbsp;</td></tr>
-				{% endfor %}
-			</table>
-			<img src="bibita.png" />
+		<td width='40%' align='right' valign='bottom'>
+			<font size='4'><i><b>Buon appetito!</b></i></font>
 		</td>
 	</tr>
 </table>
+<br>
 </body>
 </html>
