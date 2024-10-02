@@ -7,7 +7,8 @@ from datetime import datetime
 
 import config
 from config import configs
-import render
+import ordini
+import print
 
 class App:
 	def __init__(self, root):
@@ -113,13 +114,13 @@ class App:
 		self.stato_singolo.grid(row=2, column=0, columnspan=2, padx=10, pady=[0, 10], sticky="ne")
 
 		# Operazioni sull'ordine
-		self.btnscarica = ttk.Button(self.frame1, text="Scarica ordine aggiornato", command=lambda:render.scarica(self), bootstyle="primary")
+		self.btnscarica = ttk.Button(self.frame1, text="Scarica ordine aggiornato", command=lambda:ordini.scarica(self), bootstyle="primary")
 		self.btnscarica.grid(row=3, column=0, padx=10, pady=[0, 10], sticky="ew")
-		self.btncliente = ttk.Button(self.frame1, text="Stampa ricevuta cliente", command=lambda:render.stampa_singola(self, 'cliente'), bootstyle="secondary")
+		self.btncliente = ttk.Button(self.frame1, text="Stampa ricevuta cliente", command=lambda:print.stampa_singola(self, 'cliente'), bootstyle="secondary")
 		self.btncliente.grid(row=3, column=1, padx=10, pady=[0, 10], sticky="ew")
-		self.btnbar = ttk.Button(self.frame1, text="Stampa comanda bar", command=lambda:render.stampa_singola(self, 'bar'), bootstyle="info")
+		self.btnbar = ttk.Button(self.frame1, text="Stampa comanda bar", command=lambda:print.stampa_singola(self, 'bar'), bootstyle="info")
 		self.btnbar.grid(row=4, column=1, padx=10, pady=[0, 10], sticky="ew")
-		self.btncucina = ttk.Button(self.frame1, text="Stampa comanda cucina", command=lambda:render.stampa_singola(self, 'cucina'), bootstyle="warning")
+		self.btncucina = ttk.Button(self.frame1, text="Stampa comanda cucina", command=lambda:print.stampa_singola(self, 'cucina'), bootstyle="warning")
 		self.btncucina.grid(row=5, column=1, padx=10, pady=0, sticky="ew")
 
 	def widget_framelog(self):
@@ -162,7 +163,7 @@ class App:
 			# Avvia thread
 			self.update_configs()
 			self.stop_event.clear()
-			self.thread = threading.Thread(target=render.query_process, args=(self,), daemon=True)
+			self.thread = threading.Thread(target=ordini.query_process, args=(self,), daemon=True)
 			self.thread.start()
 			self.lstato.config(text="Il processo è in esecuzione")
 			self.btnstart_stop.config(text="Arresta processo", bootstyle="danger")
