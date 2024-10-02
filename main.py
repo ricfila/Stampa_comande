@@ -110,18 +110,17 @@ class App:
 		self.input_id.grid(row=1, column=1, padx=10, pady=[0, 10], sticky="ew")
 
 		self.stato_singolo = ttk.Label(self.frame1, text="")
+		self.stato_singolo.grid(row=2, column=0, columnspan=2, padx=10, pady=[0, 10], sticky="ne")
 
 		# Operazioni sull'ordine
 		self.btnscarica = ttk.Button(self.frame1, text="Scarica ordine aggiornato", command=lambda:render.scarica(self), bootstyle="primary")
-		self.btnscarica.grid(row=2, column=0, padx=10, pady=[0, 10], sticky="ew")
+		self.btnscarica.grid(row=3, column=0, padx=10, pady=[0, 10], sticky="ew")
 		self.btncliente = ttk.Button(self.frame1, text="Stampa ricevuta cliente", command=lambda:render.stampa_singola(self, 'cliente'), bootstyle="secondary")
-		self.btncliente.grid(row=2, column=1, padx=10, pady=[0, 10], sticky="ew")
+		self.btncliente.grid(row=3, column=1, padx=10, pady=[0, 10], sticky="ew")
 		self.btnbar = ttk.Button(self.frame1, text="Stampa comanda bar", command=lambda:render.stampa_singola(self, 'bar'), bootstyle="info")
-		self.btnbar.grid(row=3, column=1, padx=10, pady=[0, 10], sticky="ew")
+		self.btnbar.grid(row=4, column=1, padx=10, pady=[0, 10], sticky="ew")
 		self.btncucina = ttk.Button(self.frame1, text="Stampa comanda cucina", command=lambda:render.stampa_singola(self, 'cucina'), bootstyle="warning")
-		self.btncucina.grid(row=4, column=1, padx=10, pady=[0, 10], sticky="ew")
-
-		self.stato_singolo.grid(row=5, column=0, columnspan=2, padx=10, pady=0, sticky="nw")
+		self.btncucina.grid(row=5, column=1, padx=10, pady=0, sticky="ew")
 
 	def widget_framelog(self):
 		ltitolo1 = ttk.Label(self.framelog, text="Log generali", font=("Helvetica", 12, "bold"))

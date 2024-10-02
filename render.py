@@ -83,7 +83,7 @@ def processa_ordini(ordini, app):
 	stampe_cucina = []
 	stampe_asporto = []
 	for ordine in ordini:
-		ordine = processa_singolo_ordine(ordine)
+		ordine = processa_singolo_ordine(conn, ordine, app)
 
 		if ordine['id_progressivo_bar'] is not None and not ordine['esportazione']:
 			stampe_bar.append({'ordine': ordine, 'template': 'bar'})
@@ -101,26 +101,32 @@ def processa_ordini(ordini, app):
 
 	tot_stampe = len(stampe_bar) + len(stampe_cucina) + len(stampe_asporto)
 	if tot_stampe > 0:
-		app.log_message("Avviata la stampa di " + str(len(tot_stampe)) + " comande")
+		app.log_message(f"Avviata la stampa di {tot_stampe} comande")
 	
-	for stampa in stampe_bar:
-		stampa_comanda(stampa['ordine']['id'], stampa['template'], app)
-	for stampa in stampe_cucina:
-		stampa_comanda(stampa['ordine'], stampa['template'], app)
-	for stampa in stampe_asporto:
-		stampa_comanda(stampa['ordine'], stampa['template'], app)
+	threading.Thread(target=processo_stampe, args=(app, (stampe_bar + stampe_cucina + stampe_asporto))).start()
 	
 	cur.close()
 	conn.close()
 
+
+def processo_stampe(app, stampe):
+	if len(stampe) > 0:
+		app.log_stampe("--------------------", True)
+	for stampa in stampe:
+		stampa_comanda(stampa['ordine']['id'], stampa['template'], app)
+
 def scarica(app):
+	id = app.input_id.get()
+	if not id.isdigit():
+		app.stato_singolo.config(text=f"Inserire un id valido")
+		return
 	conn = config.get_connection()
 	cur = conn.cursor()
-	id = app.input_id.get()
 	cur.execute(f"SELECT * FROM ordini WHERE id = {id};")
 	if cur.rowcount == 1:
-		ordine = cur.fetchone()
-		processa_singolo_ordine(conn, ordine, app)
+		ordini = config.get_dict(cur)
+		processa_singolo_ordine(conn, ordini[0], app)
+		app.stato_singolo.config(text=f"")
 	else:
 		app.stato_singolo.config(text=f"L'ordine con ID {id} non esiste")
 	cur.close()
@@ -128,9 +134,12 @@ def scarica(app):
 
 def stampa_singola(app, template):
 	id = app.input_id.get()
+	if not id.isdigit():
+		app.stato_singolo.config(text=f"Inserire un id valido")
+		return
 	if os.path.isfile(file_comanda(id, "cliente")):
 		if os.path.isfile(file_comanda(id, template)):
-			stampa_comanda(id, template, app, True)
+			threading.Thread(target=stampa_comanda, args=(id, template, app, True)).start()
 			app.stato_singolo.config(text="")
 		else:
 			app.stato_singolo.config(text=f"L'ordine {id} non prevede la copia {template}")
@@ -194,7 +203,10 @@ def stampa_comanda(id, tipo, app, manuale = False):
 	result = subprocess.run([printer_executable] + params, capture_output=True, text=True)
 	if (result.returncode != 0):
 		app.log_message("Errore di stampa della comanda ID " + str(id) + '_' + tipo + "\n" + result.stderr)
-		app.log_stampe(f"{id}_{tipo}", False)
+		if manuale:
+			app.stato_singolo.config(text="Stampa fallita")
+		else:
+			app.log_stampe(f"{id}_{tipo}", False)
 	else:
 		app.log_stampe(f"Stampata manualmente {id}_{tipo}" if manuale else f"Stampata {id}_{tipo}", True)
 
