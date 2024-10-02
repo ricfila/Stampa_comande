@@ -169,10 +169,15 @@ class App:
 			self.btnstart_stop.config(text="Arresta processo", bootstyle="danger")
 		else:
 			# Arresta thread
+			self.btnstart_stop.config(state="disabled")
 			self.stop_event.set()
-			self.lstato.config(text="Il processo è sospeso")
-			self.btnstart_stop.config(text="Avvia processo", bootstyle="success")
-	
+			self.log_message("Il processo è stato arrestato dall'utente\n")
+
+	def fine_processo(self):
+		self.lstato.config(text="Il processo è sospeso")
+		self.btnstart_stop.config(text="Avvia processo", bootstyle="success")
+		self.btnstart_stop.config(state="normal")
+
 	def save(self):
 		self.update_configs()
 		config.save()
@@ -180,7 +185,7 @@ class App:
 	def log_message(self, message):
 		now = datetime.now()
 		self.log_box.config(state='normal')  # Rendi modificabile
-		out_text = now.strftime("%H:%M:%S") + " | " + message + "\n"
+		out_text = now.strftime("%H:%M:%S") + " | " + message
 		self.log_box.insert(tk.END, out_text)
 		self.log_box.config(state='disabled')  # Torna a sola lettura
 		self.log_box.see(tk.END)  # Scrolla automaticamente verso il basso
@@ -210,5 +215,6 @@ if __name__ == "__main__":
 	config.init()
 		
 	root = ttk.Window(themename="flatly")
+	root.state("zoomed")
 	app = App(root)
 	root.mainloop()

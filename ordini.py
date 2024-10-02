@@ -1,71 +1,74 @@
-import os
 import threading
 import time
 from datetime import timedelta
 from psycopg2 import DatabaseError, OperationalError
 
 import config
+from config import configs
 from render import render_template
 import print
 
 secondi_attesa = 20
 
-
 def query_process(app):
-	conn = config.get_connection()
-	cur = conn.cursor()
+	conn = config.get_connection(app)
+	if conn is not None:
+		try:
+			cur = conn.cursor()
+			# Aggiornamento turno di servizio
+			cur.execute("SELECT * FROM shiftstart;")
+			data1 = cur.fetchone()[0]
+			data2 = data1 + timedelta(days=1)
+			app.info_turno = "ordini.data >= '" + str(data1.date()) + "' and ordini.data < '" + str(data2.date()) + "' and ordini.ora > '" + str(data1.time()) + "'" + (" and ordini.ora < '17:00'" if data1.hour == 0 else "")
+			text_turno = data1.strftime("%A %d") + (" pranzo" if data1.hour < 17 else " cena")
+			app.lturno.config(text=("Turno di " + text_turno))
+			app.log_message("Processo avviato nel turno di " + text_turno + "\n")
 
-	try:
-		# Aggiornamento turno di servizio
-		cur.execute("SELECT * FROM shiftstart;")
-		data1 = cur.fetchone()[0]
-		data2 = data1 + timedelta(days=1)
-		app.info_turno = "ordini.data >= '" + str(data1.date()) + "' and ordini.data < '" + str(data2.date()) + "' and ordini.ora > '" + str(data1.time()) + "'" + (" and ordini.ora < '17:00'" if data1.hour == 0 else "")
-		text_turno = data1.strftime("%A %d") + (" pranzo" if data1.hour < 17 else " cena")
-		app.lturno.config(text=("Turno di " + text_turno))
-		app.log_message("Processo avviato nel turno di " + text_turno)
+			stampante = configs['Stampa']['stampante']
+			while not app.stop_event.is_set():
+				try:
+					conn.reset()
+					if not print.printer_ready(stampante):
+						app.log_message("La stampate {stampante} non è attualmente disponibile. Ricerca di comande procrastinata")
+					else:
+						cur.execute("SELECT ordini.* FROM ordini LEFT JOIN passaggi_stato ON passaggi_stato.id_ordine = ordini.id \
+							WHERE " + app.info_turno + " and(\
+								(ordini.esportazione = 't' and passaggi_stato.stato is null) or \
+								(passaggi_stato.stato is null and ordini.\"numeroTavolo\" <> '') or \
+								(passaggi_stato.stato = 0 and (EXTRACT(HOUR FROM (LOCALTIME - passaggi_stato.ora)) * 3600 + \
+												EXTRACT(MINUTE FROM (LOCALTIME - passaggi_stato.ora)) * 60 + \
+												EXTRACT(SECOND FROM (LOCALTIME - passaggi_stato.ora))) > 30)) \
+							and ordini.stato_bar <> 'evaso' and ordini.stato_cucina <> 'evaso'\
+							ORDER BY ordini.esportazione desc, passaggi_stato.ora;")
+						ordini = config.get_dict(cur)
 
-		while not app.stop_event.is_set():
-			try:
-				conn.reset()
-				cur.execute("SELECT ordini.* FROM ordini LEFT JOIN passaggi_stato ON passaggi_stato.id_ordine = ordini.id \
-					WHERE " + app.info_turno + " and(\
-						(ordini.esportazione = 't' and passaggi_stato.stato is null) or \
-						(passaggi_stato.stato is null and ordini.\"numeroTavolo\" <> '') or \
-						(passaggi_stato.stato = 0 and (EXTRACT(HOUR FROM (LOCALTIME - passaggi_stato.ora)) * 3600 + \
-										EXTRACT(MINUTE FROM (LOCALTIME - passaggi_stato.ora)) * 60 + \
-										EXTRACT(SECOND FROM (LOCALTIME - passaggi_stato.ora))) > 30)) \
-					and ordini.stato_bar <> 'evaso' and ordini.stato_cucina <> 'evaso'\
-					ORDER BY ordini.esportazione desc, passaggi_stato.ora;")
-				ordini = config.get_dict(cur)
+						processa_ordini(app, conn, ordini)
 
-				processa_ordini(ordini, app)
-
-			except OperationalError as e:
-				app.log_message(f"Errore di connessione (nuovo tentativo tra {secondi_attesa} secondi): {e}")
-			except DatabaseError as e:
-				app.log_message(f"Errore del database (nuovo tentativo tra {secondi_attesa} secondi): {e}")
-			except Exception as e:
-				app.log_message(f"Errore durante l'esecuzione del processo automatico (nuovo tentativo tra {secondi_attesa} secondi): {e}")
-			finally:
-				i = 0
-				while i < secondi_attesa and not app.stop_event.is_set():
-					time.sleep(2)
-					i += 2
+				except OperationalError as e:
+					app.log_message(f"Errore di connessione (nuovo tentativo tra {secondi_attesa} secondi): {e}")
+				except DatabaseError as e:
+					app.log_message(f"Errore del database (nuovo tentativo tra {secondi_attesa} secondi): {e}")
+				except Exception as e:
+					app.log_message(f"Errore durante l'esecuzione del processo automatico (nuovo tentativo tra {secondi_attesa} secondi): {e}")
+				finally:
+					i = 0
+					while i < secondi_attesa and not app.stop_event.is_set():
+						time.sleep(2)
+						i += 2
+		
+		except OperationalError as e:
+			app.log_message(f"Errore di connessione durante l'inizializzazione del processo automatico: {e}")
+		except DatabaseError as e:
+			app.log_message(f"Errore del database durante l'inizializzazione del processo automatico: {e}")
+		except Exception as e:
+			app.log_message(f"Errore durante l'inizializzazione del processo automatico: {e}")
 	
-	except OperationalError as e:
-		app.log_message(f"Errore di connessione durante l'inizializzazione del processo automatico: {e}")
-	except DatabaseError as e:
-		app.log_message(f"Errore del database durante l'inizializzazione del processo automatico: {e}")
-	except Exception as e:
-		app.log_message(f"Errore durante l'inizializzazione del processo automatico: {e}")
-	finally:
 		cur.close()
 		conn.close()
+	
+	app.fine_processo()
 
-			
-def processa_ordini(ordini, app):
-	conn = config.get_connection()
+def processa_ordini(app, conn, ordini):
 	cur = conn.cursor()
 	
 	stampe_bar = []
@@ -87,15 +90,10 @@ def processa_ordini(ordini, app):
 		else:
 			cur.execute("UPDATE passaggi_stato SET stato = 10 WHERE id_ordine = " + str(ordine['id']) + " AND stato = 0;")
 	conn.commit()
-
-	tot_stampe = len(stampe_bar) + len(stampe_cucina) + len(stampe_asporto)
-	if tot_stampe > 0:
-		app.log_message(f"Avviata la stampa di {tot_stampe} comande")
 	
 	threading.Thread(target=print.processo_stampe, args=(app, (stampe_bar + stampe_cucina + stampe_asporto))).start()
 	
 	cur.close()
-	conn.close()
 
 def processa_singolo_ordine(conn, ordine, app):
 	try:
@@ -140,8 +138,10 @@ def scarica(app):
 	if not id.isdigit():
 		app.stato_singolo.config(text=f"Inserire un id valido")
 		return
-	conn = config.get_connection()
+	conn = config.get_connection(app)
+	if conn is None: return
 	cur = conn.cursor()
+
 	cur.execute(f"SELECT * FROM ordini WHERE id = {id};")
 	if cur.rowcount == 1:
 		ordini = config.get_dict(cur)
@@ -151,4 +151,3 @@ def scarica(app):
 		app.stato_singolo.config(text=f"L'ordine con ID {id} non esiste")
 	cur.close()
 	conn.close()
-
