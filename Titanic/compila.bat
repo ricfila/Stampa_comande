@@ -1,0 +1,1 @@
+g++ titanic.cpp -o Installa_Titanic.exe -lgdi32 -lwinspool
