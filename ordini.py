@@ -29,7 +29,7 @@ def query_process(app):
 				try:
 					conn.reset()
 					if not print.printer_ready(stampante):
-						app.log_message("La stampate {stampante} non è attualmente disponibile. Ricerca di comande procrastinata")
+						app.log_message(f"La stampate {stampante} non è attualmente disponibile. Ricerca di comande procrastinata\n")
 					else:
 						cur.execute("SELECT ordini.* FROM ordini LEFT JOIN passaggi_stato ON passaggi_stato.id_ordine = ordini.id \
 							WHERE " + app.info_turno + " and(\
