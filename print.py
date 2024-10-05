@@ -50,7 +50,7 @@ def processo_stampe(app, stampe):
 	stampante = configs['Stampa']['stampante']
 	out = ''
 	for stampa in stampe:
-		out += ("" if len(out) == 0 else ",") + stampa['ordine']['id'] + "_" + stampa['template']
+		out += ("" if len(out) == 0 else ",") + str(stampa['ordine']['id']) + "_" + stampa['template']
 	if not printer_ready(stampante):
 		app.log_message(f"Stampante {stampante} offline. {len(stampe)} stampe in attesa: {out}\n")
 		while not printer_ready(stampante) and not app.stop_event.is_set(): pass

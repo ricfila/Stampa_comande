@@ -3,3 +3,4 @@ __pycache__
 comande/*.html
 temp.pdf
 *.log
+configs.ini

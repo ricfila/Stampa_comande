@@ -33,7 +33,7 @@ def query_process(app):
 					else:
 						cur.execute("SELECT ordini.* FROM ordini LEFT JOIN passaggi_stato ON passaggi_stato.id_ordine = ordini.id \
 							WHERE " + app.info_turno + " and(\
-								(ordini.esportazione = 't' and passaggi_stato.stato is null) or \
+								(ordini.esportazione = 't' and passaggi_stato.stato is null and ordini.ora <= LOCALTIME) or \
 								(passaggi_stato.stato is null and ordini.\"numeroTavolo\" <> '') or \
 								(passaggi_stato.stato = 0 and (EXTRACT(HOUR FROM (LOCALTIME - passaggi_stato.ora)) * 3600 + \
 												EXTRACT(MINUTE FROM (LOCALTIME - passaggi_stato.ora)) * 60 + \
@@ -75,20 +75,23 @@ def processa_ordini(app, conn, ordini):
 	stampe_cucina = []
 	stampe_asporto = []
 	for ordine in ordini:
-		ordine = processa_singolo_ordine(conn, ordine, app)
-
-		if ordine['id_progressivo_bar'] is not None and not ordine['esportazione']:
-			stampe_bar.append({'ordine': ordine, 'template': 'bar'})
-		if ordine['id_progressivo_cucina'] is not None:
-			if ordine['esportazione']:
-				stampe_asporto.append({'ordine': ordine, 'template': 'cucina'})
-			else:
-				stampe_cucina.append({'ordine': ordine, 'template': 'cucina'})
-
-		if ordine['esportazione']:
-			cur.execute("INSERT INTO passaggi_stato (id_ordine, ora, stato) VALUES (" + str(ordine['id']) + ", LOCALTIME, 10);")
+		if ordine['esportazione'] and len(ordine['numeroTavolo']) == 5:
+			cur.execute("UPDATE ordini SET ora = '" + ordine['numeroTavolo'] + "', \"numeroTavolo\" = '' WHERE id = " + str(ordine['id']) + ";")
 		else:
-			cur.execute("UPDATE passaggi_stato SET stato = 10 WHERE id_ordine = " + str(ordine['id']) + " AND stato = 0;")
+			ordine = processa_singolo_ordine(conn, ordine, app)
+
+			if ordine['id_progressivo_bar'] is not None and not ordine['esportazione']:
+				stampe_bar.append({'ordine': ordine, 'template': 'bar'})
+			if ordine['id_progressivo_cucina'] is not None:
+				if ordine['esportazione']:
+					stampe_asporto.append({'ordine': ordine, 'template': 'cucina'})
+				else:
+					stampe_cucina.append({'ordine': ordine, 'template': 'cucina'})
+
+			if ordine['esportazione']:
+				cur.execute("INSERT INTO passaggi_stato (id_ordine, ora, stato) VALUES (" + str(ordine['id']) + ", LOCALTIME, 10);")
+			else:
+				cur.execute("UPDATE passaggi_stato SET stato = 10 WHERE id_ordine = " + str(ordine['id']) + " AND stato = 0;")
 	conn.commit()
 	
 	threading.Thread(target=print.processo_stampe, args=(app, (stampe_bar + stampe_cucina + stampe_asporto))).start()
