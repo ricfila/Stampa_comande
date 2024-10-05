@@ -7,55 +7,107 @@
 	</head>
 <body>
 
-<img src="logo_chiesa.png" />&nbsp;<b>Parrocchia di Stra - Festa della comunità {{ordine.data.strftime("%Y")}}</b><br>
-<table width='100%' border='0' cellspacing='0'>
-	<tr>
-		<td width="15%" rowspan="2" align="center" valign="top">
-			<font size='2'>Ordine</font><br /><font size='5'>{{ordine.progressivo}}</font>
-		</td>
-		<td width="25%">
-			{{ordine.cassa}}
-		</td>
-		<td>
-			{{ordine.data.strftime("%a %d %B")}} - {{ordine.ora.strftime("%H:%M:%S")}}
-		</td>
-		{% if ordine.coperti %}
-			<td width="15%" rowspan="2" align="center" valign="top">
-				<font size='2'>Tavolo</font><br /><font size='5'>{{ordine.numeroTavolo}}</font>
-			</td>
-		{% endif %}
-	</tr>
-	<tr>
-		<td>
-			{% if ordine.esportazione %}
-				ASPORTO
-			{% else %}
-				{% if ordine.coperti %}
-					COPERTI: {{ordine.coperti}}
-				{% else %}
-					AGGIUNTA
-				{% endif %}
-			{% endif %}
-		</td>
-		<td>
-			Cliente: {{ordine.cliente}}
-		</td>
-	</tr>
-	<tr>
-		<td align="center">
-			(ID: {{ordine.id}})
-		</td>
-		<td colspan="2">
-			{% if not ordine.esportazione %}
-				Cameriere:
-			{% endif %}
-		</td>
-	</tr>
-</table>
+{% set ns = namespace(tipologia = 'null', i = 999, pagina = 0) %}
+
+{% if ordine.esportazione %}
+	{% set righe_cucina = ordine.righe_copia_cucina + ordine.righe_copia_bar %}
+{% else %}
+	{% set righe_cucina = ordine.righe_copia_cucina %}
+{% endif %}
 
 <table width='100%' border='0' cellpadding='3'>
-	{% set ns = namespace(tipologia = 'null', i = 1, totbar = 0) %}
-	{% for riga_ordine in ordine.righe_copia_cucina %}
+	{% for riga_ordine in righe_cucina %}
+		{% if ns.i > 20 %}
+			</table>
+			{% if ns.pagina > 0 %}
+				<table width='100%' border='0' cellpadding='2'>
+					{% if ns.tipologia != riga_ordine.desc_tipologia %}
+						<tr bgcolor="#CCCCCC">
+							<td colspan='2'></td>
+						</tr>
+						{% set ns.tipologia = riga_ordine.desc_tipologia %}
+					{% endif %}
+					<tr>
+						<td width="50%"></td>
+						<td bgcolor="#444444" align="center"><i><b><font color="white">Segue →</font></b></i></td>
+					</tr>
+					{% for x in range(ns.i, 22) %}
+						<tr><td>&nbsp;</td></tr>
+					{% endfor %}
+				</table>
+				<table width='100%' border='0'>
+					<tr>
+						<td></td>
+						<td width='30%'>
+							<img src="spirale.png" />
+						</td>
+					</tr>
+				</table>
+			{% endif %}
+			{% set ns.i = 0 %}
+			{% set ns.pagina = ns.pagina + 1 %}
+			
+			<img src="logo_sagra2022_nero.png" />&nbsp;<b>Sagra di Stra</b>&emsp;
+			<font size='2'>{{ordine.data.strftime("%a %d %b %Y")}}, {{ordine.ora.strftime("%H:%M")}} - {{ordine.cassa}}{% if ordine.tipo_pagamento != "CONTANTI" %}*{% endif %} - ID {{ordine.id}}</font>
+			<b style="position: absolute; right: 10px;">{% if ordine.esportazione %}ASPORTO{% else %}CUCINA{% endif %}</b>
+
+			<table width='100%' border='0' cellspacing='0'>
+				<colgroup>
+					<col width="15%">
+					<col width="40%">
+					<col width="10%">
+					<col width="35%">
+				</colgroup>
+				<tr>
+					<td colspan="1" align="center" rowspan="2" valign="top">
+						<font size='2'>Ordine</font><br /><font size='5'>{{ordine.progressivo}}</font>
+					</td>
+					<td colspan="1">
+						{% if ordine.esportazione %}
+							ASPORTO
+						{% else %}
+							{% if ordine.coperti %}
+								COPERTI: <b>{{ordine.coperti}}</b>
+							{% else %}
+								AGGIUNTA
+							{% endif %}
+						{% endif %}
+					</td>
+					<td colspan="2">
+						Cliente: <i><b>{{ordine.cliente}}</b></i>
+					</td>
+				</tr>
+				<tr>
+					{% if ns.pagina == 1 %}
+						<td colspan="2">
+							{% if not ordine.esportazione %}
+								Cameriere: ........................................
+								{% endif %}
+						</td>
+					{% else %}
+						<td colspan="1" bgcolor="#444444" align="center"><i><b><font color="white">→ Pagina {{ns.pagina}}</font></b></i></td><td colspan="1"></td>
+					{% endif %}
+					{% if not ordine.esportazione %}
+						<td colspan="1">
+							Tavolo: 
+							{% if ordine.numeroTavolo %}
+								<b>{{ordine.numeroTavolo}}</b>
+							{% else %}
+								...............
+							{% endif %}
+						</td>
+					{% endif %}
+				</tr>
+			</table>
+			
+			<table width='100%' border='0' cellpadding='2'>
+			{% if ns.pagina > 1 %}
+				<tr bgcolor="#CCCCCC">
+					<td colspan='3'><b>{{ns.tipologia}}</b></td>
+				</tr>
+			{% endif %}
+		{% endif %}
+		
 		{% if ns.tipologia != riga_ordine.desc_tipologia %}
 			<tr bgcolor="#CCCCCC">
 				<td colspan='3'><b>{{riga_ordine.desc_tipologia}}</b></td>
@@ -64,39 +116,29 @@
 			{% set ns.i = ns.i + 1 %}
 		{% endif %}
 		<tr>
-			<td align='center'>{{riga_ordine.quantita}}</td>
-			<td>{{riga_ordine.descrizione}}{% if riga_ordine.note %}&nbsp;→&nbsp;<i>{{riga_ordine.note}}</i>{% endif %}</td>
-			<td align='right'>&euro;&nbsp;{{riga_ordine.prezzo_totale}}</td>
+			<td align='center' width="7%">{{riga_ordine.quantita}}</td>
+			<td>{{riga_ordine.descrizione}}</td>
 		</tr>
+		{% if riga_ordine.note %}
+			<tr>
+				<td></td>
+				<td colspan="2">→&nbsp;<i>{{riga_ordine.note}}</i></td>
+			</tr>
+			{% set ns.i = ns.i + 1 %}
+		{% endif %}
 		{% set ns.i = ns.i + 1 %}
-	{% endfor %}
-	{% for riga_bar in ordine.righe_copia_bar %}
-		{% set ns.totbar = ns.totbar + riga_bar.prezzo_totale %}
 	{% endfor %}
 	<tr bgcolor="#CCCCCC">
 		<td colspan='3'></td>
 	</tr>
-	{% if ns.totbar > 0 %}
-		<tr>
-			<td></td>
-			<td>TOTALE BAR</td>
-			<td align='right'>&euro;&nbsp;{{ns.totbar}}</td>
-		</tr>
-		{% set ns.i = ns.i + 1 %}
-	{% endif %}
-	<tr>
-		<td></td>
-		<td>TOTALE</td>
-		<td align='right'>&euro;&nbsp;{{ordine.totale}}</td>
-	</tr>
 </table>
 
-<br /><br />
+<br />
 <table width="100%">
 	<tr>
 		<td valign='top'>
 			{% if ordine.note %}
-				<b>Note:</b> <i>{{ordine.note}}</i><br>
+				<b>Note per la cucina:</b> <i>{{ordine.note}}</i><br>
 			{% endif %}
 		</td>
 		<td width='30%'>
@@ -105,7 +147,11 @@
 					<tr><td>&nbsp;</td></tr>
 				{% endfor %}
 			</table>
-			<img src="spirale.png" />
+			{% if ordine.esportazione %}
+				<img src="borsa.png" />
+			{% else %}
+				<img src="spirale.png" />
+			{% endif %}
 		</td>
 	</tr>
 </table>

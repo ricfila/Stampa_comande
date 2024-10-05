@@ -131,7 +131,7 @@ def processa_singolo_ordine(conn, ordine, app):
 	except DatabaseError as e:
 		app.log_message(f"Errore del database: {e}")
 	except Exception as e:
-		app.log_message("Errore durante il processamento dell'ordine ID " + str(ordine['id']) + f": {e}")
+		app.log_message("Errore durante il processamento dell'ordine ID " + str(ordine['id']) + f": {e}\n")
 	finally:
 		cur.close()
 		return ordine

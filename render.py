@@ -9,6 +9,7 @@ Nuovi parametri:
 {{ordine.righe_copia_cliente}}
 {{ordine.righe_copia_bar}}
 {{ordine.righe_copia_cucina}}
+{{ordine.totale}}
 {{riga.prezzo_totale}}
 """
 
