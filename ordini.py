@@ -76,7 +76,11 @@ def processa_ordini(app, conn, ordini):
 	stampe_asporto = []
 	for ordine in ordini:
 		if ordine['esportazione'] and len(ordine['numeroTavolo']) == 5:
-			cur.execute("UPDATE ordini SET ora = '" + ordine['numeroTavolo'] + "', \"numeroTavolo\" = '' WHERE id = " + str(ordine['id']) + ";")
+			try:
+				cur.execute("UPDATE ordini SET ora = '" + ordine['numeroTavolo'] + "', \"numeroTavolo\" = '' WHERE id = " + str(ordine['id']) + ";")
+				app.log_message("L'ordine " + str(ordine['id']) + " è stato correttamente programmato per le " + ordine['numeroTavolo'] + "\n")
+			except Exception as e:
+				app.log_message("Errore durante la programmazione dell'ordine " + str(ordine['id']) + f" {e}")
 		else:
 			ordine = processa_singolo_ordine(conn, ordine, app)
 

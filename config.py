@@ -14,12 +14,12 @@ def init():
 	configs.read(config_file_path)
 
 	# Aggiunge impostazioni di default se non erano presenti nel file
-	sezioni = {"PostgreSQL": {"server": "192.168.1.201",
+	sezioni = {"PostgreSQL": {"server": "192.168.1.1",
 							  "port": 5432,
 							  "database": "sagra",
 							  "username": "postgres",
-							  "password": "PwdSagraDB"},
-			   "Stampa": {"stampante": "HP3"}
+							  "password": "pwd"},
+			   "Stampa": {"stampante": "Microsoft Print to PDF"}
 			  }
 
 	for k, v in sezioni.items():
