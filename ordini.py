@@ -82,20 +82,28 @@ def processa_ordini(app, conn, ordini):
 			except Exception as e:
 				app.log_message("Errore durante la programmazione dell'ordine " + str(ordine['id']) + f" {e}")
 		else:
-			ordine = processa_singolo_ordine(conn, ordine, app)
+			try:
+				ordine = processa_singolo_ordine(conn, ordine, app)
 
-			if ordine['id_progressivo_bar'] is not None and not ordine['esportazione']:
-				stampe_bar.append({'ordine': ordine, 'template': 'bar'})
-			if ordine['id_progressivo_cucina'] is not None:
+				if ordine['id_progressivo_bar'] is not None and not ordine['esportazione']:
+					stampe_bar.append({'ordine': ordine, 'template': 'bar'})
+				if ordine['id_progressivo_cucina'] is not None:
+					if ordine['esportazione']:
+						stampe_asporto.append({'ordine': ordine, 'template': 'cucina'})
+					else:
+						stampe_cucina.append({'ordine': ordine, 'template': 'cucina'})
+
 				if ordine['esportazione']:
-					stampe_asporto.append({'ordine': ordine, 'template': 'cucina'})
+					cur.execute("INSERT INTO passaggi_stato (id_ordine, ora, stato) VALUES (" + str(ordine['id']) + ", LOCALTIME, 10);")
 				else:
-					stampe_cucina.append({'ordine': ordine, 'template': 'cucina'})
+					cur.execute("SELECT COUNT(*) FROM passaggi_stato WHERE id_ordine = " + str(ordine['id']) + " AND stato = 0;")
+					if cur.fetchone()[0] < 1:
+						cur.execute("INSERT INTO passaggi_stato (id_ordine, ora, stato) VALUES (" + str(ordine['id']) + ", LOCALTIME, 10);")
+					else:
+						cur.execute("UPDATE passaggi_stato SET stato = 10 WHERE id_ordine = " + str(ordine['id']) + " AND stato = 0;")
+			except Exception as e:
+				app.log_message("Errore durante la conferma di stampa dell'ordine " + str(ordine['id']) + f" {e}")
 
-			if ordine['esportazione']:
-				cur.execute("INSERT INTO passaggi_stato (id_ordine, ora, stato) VALUES (" + str(ordine['id']) + ", LOCALTIME, 10);")
-			else:
-				cur.execute("UPDATE passaggi_stato SET stato = 10 WHERE id_ordine = " + str(ordine['id']) + " AND stato = 0;")
 	conn.commit()
 	
 	threading.Thread(target=print.processo_stampe, args=(app, (stampe_bar + stampe_cucina + stampe_asporto))).start()
