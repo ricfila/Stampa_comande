@@ -31,7 +31,7 @@ g++ -o bin/HTMLPrint main.cpp -Iinclude -Llib -lpdfium -lgdi32 -lwinspool
 
 int main(int argc, char** argv) {
     if (argc < 3) {
-        std::cerr << "Utilizzo: " << argv[0] << " <file_pdf> <nome_stampante> <dim_foglio> <zoom> <margine_alto> <margine_basso> <margine_destro> <margine_sinistro>" << std::endl;
+        std::cerr << "Utilizzo: " << argv[0] << " <file_html> <nome_stampante> <dim_foglio> <zoom> <margine_alto> <margine_basso> <margine_destro> <margine_sinistro>" << std::endl;
         return 1;
     }
 
