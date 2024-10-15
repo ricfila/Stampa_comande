@@ -1,3 +1,4 @@
+import os
 import tkinter as tk
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
@@ -5,10 +6,10 @@ import threading
 import win32print
 from datetime import datetime
 
-import src.config as config
+from src import config
 from src.config import configs
-import ordini
-import print
+from src import ordini
+from src import printfile
 
 class App:
 	def __init__(self, root):
@@ -116,11 +117,11 @@ class App:
 		# Operazioni sull'ordine
 		self.btnscarica = ttk.Button(self.frame1, text="Scarica ordine aggiornato", command=lambda:ordini.scarica(self), bootstyle="primary")
 		self.btnscarica.grid(row=3, column=0, padx=10, pady=[0, 10], sticky="ew")
-		self.btncliente = ttk.Button(self.frame1, text="Stampa ricevuta cliente", command=lambda:print.stampa_singola(self, 'cliente'), bootstyle="secondary")
+		self.btncliente = ttk.Button(self.frame1, text="Stampa ricevuta cliente", command=lambda:printfile.stampa_singola(self, 'cliente'), bootstyle="secondary")
 		self.btncliente.grid(row=3, column=1, padx=10, pady=[0, 10], sticky="ew")
-		self.btnbar = ttk.Button(self.frame1, text="Stampa comanda bar", command=lambda:print.stampa_singola(self, 'bar'), bootstyle="info")
+		self.btnbar = ttk.Button(self.frame1, text="Stampa comanda bar", command=lambda:printfile.stampa_singola(self, 'bar'), bootstyle="info")
 		self.btnbar.grid(row=4, column=1, padx=10, pady=[0, 10], sticky="ew")
-		self.btncucina = ttk.Button(self.frame1, text="Stampa comanda cucina", command=lambda:print.stampa_singola(self, 'cucina'), bootstyle="warning")
+		self.btncucina = ttk.Button(self.frame1, text="Stampa comanda cucina", command=lambda:printfile.stampa_singola(self, 'cucina'), bootstyle="warning")
 		self.btncucina.grid(row=5, column=1, padx=10, pady=0, sticky="ew")
 
 	def widget_framelog(self):
@@ -213,6 +214,7 @@ class App:
 
 if __name__ == "__main__":
 	config.init()
+	print("Current working directory:", os.getcwd())
 		
 	root = ttk.Window(themename="flatly")
 	root.state("zoomed")

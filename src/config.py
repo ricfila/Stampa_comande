@@ -3,7 +3,7 @@ import os
 import psycopg2
 
 configs = configparser.ConfigParser()
-config_file_path = os.path.join(os.path.dirname(__file__), 'configs.ini')
+config_file_path = os.path.join(os.getcwd(), 'configs.ini')
 
 def init():
 	# Crea il file configs.ini se non esiste

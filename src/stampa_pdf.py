@@ -11,14 +11,14 @@ async def print_pdf(url, output_path, printer_name):
 		browser = await p.chromium.launch()
 		page = await browser.new_page()
 		#await page.set_viewport_size({'width': 1000, 'height': 2480})
-		await page.goto(os.path.abspath(os.path.join(os.path.dirname(__file__), url)))
+		await page.goto(os.path.abspath(os.path.join(os.getcwd(), url)))
 		await page.pdf(path=output_path, format= 'A5')
 		#await page.screenshot(path=output_path, full_page=True)
 		await browser.close()
 
 		# Comando per stampare il PDF
 		win32print.SetDefaultPrinter(printer_name)
-		file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), output_path))
+		file_path = os.path.abspath(os.path.join(os.getcwd(), output_path))
 
 		hPrinter = win32print.OpenPrinter(printer_name)
 		job_id = win32print.StartDocPrinter(hPrinter, 1, ("Stampa comanda", None, None))

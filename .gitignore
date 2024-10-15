@@ -4,3 +4,4 @@ dist/comande/*.html
 temp.pdf
 *.log
 configs.ini
+build

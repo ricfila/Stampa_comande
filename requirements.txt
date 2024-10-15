@@ -1,0 +1,4 @@
+ttkbootstrap
+pywin32
+jinja2
+psycopg2

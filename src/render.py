@@ -14,7 +14,7 @@ Nuovi parametri:
 """
 
 def render_template(ordine, name_template):
-	template_dir = os.path.join(os.path.dirname(__file__), 'templates')
+	template_dir = os.path.join(os.getcwd(), 'templates')
 	env = Environment(loader=FileSystemLoader(template_dir))
 
 	# Carica il template

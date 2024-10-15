@@ -3,10 +3,10 @@ import time
 from datetime import timedelta
 from psycopg2 import DatabaseError, OperationalError
 
-import src.config as config
+from src import config
 from src.config import configs
-from render import render_template
-import print
+from src.render import render_template
+from src import printfile
 
 secondi_attesa = 20
 
@@ -28,7 +28,7 @@ def query_process(app):
 			while not app.stop_event.is_set():
 				try:
 					conn.reset()
-					if not print.printer_ready(stampante):
+					if not printfile.printer_ready(stampante):
 						app.log_message(f"La stampate {stampante} non è attualmente disponibile. Ricerca di comande procrastinata\n")
 					else:
 						cur.execute("SELECT ordini.* FROM ordini LEFT JOIN passaggi_stato ON passaggi_stato.id_ordine = ordini.id \
@@ -106,7 +106,7 @@ def processa_ordini(app, conn, ordini):
 
 	conn.commit()
 	
-	threading.Thread(target=print.processo_stampe, args=(app, (stampe_bar + stampe_cucina + stampe_asporto))).start()
+	threading.Thread(target=printfile.processo_stampe, args=(app, (stampe_bar + stampe_cucina + stampe_asporto))).start()
 	
 	cur.close()
 
