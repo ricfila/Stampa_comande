@@ -1,6 +1,6 @@
 __pycache__
 .vscode
-comande/*.html
+dist/comande/*.html
 temp.pdf
 *.log
 configs.ini

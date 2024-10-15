@@ -3,8 +3,8 @@ import time
 from datetime import timedelta
 from psycopg2 import DatabaseError, OperationalError
 
-import config
-from config import configs
+import src.config as config
+from src.config import configs
 from render import render_template
 import print
 

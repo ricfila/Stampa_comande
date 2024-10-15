@@ -4,7 +4,7 @@ import threading
 import win32print
 
 from render import file_comanda
-from config import configs
+from src.config import configs
 
 printer_executable = "HTMLPrint/bin/HTMLPrint.exe"
 formato_carta = "A5"

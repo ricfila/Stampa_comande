@@ -5,8 +5,8 @@ import threading
 import win32print
 from datetime import datetime
 
-import config
-from config import configs
+import src.config as config
+from src.config import configs
 import ordini
 import print
 
